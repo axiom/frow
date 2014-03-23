@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -12,6 +14,10 @@ const (
 	StopFlag          = 0xf2
 	StuffFlag         = 0xf3
 )
+
+type Framer interface {
+	Frame() []byte
+}
 
 type FrameContents interface {
 	Bytes() []byte
@@ -110,4 +116,44 @@ func (f Frame) Bytes() ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
+}
+
+func GetContentsFromFrame(frame []byte) ([]byte, error) {
+	// First byte is USB stuff.
+	if frame[1] != StandardStartFlag {
+		return nil, errors.New("Bad start byte")
+	}
+
+	var output bytes.Buffer
+
+	// Unstuff
+	unstuff := false
+	for _, b := range frame[2:len(frame)] {
+		if b == StopFlag {
+			break
+		}
+
+		if unstuff {
+			output.WriteByte(b | byte(0xff&(0xff<<2)))
+			unstuff = false
+			continue
+		} else if b == StuffFlag {
+			unstuff = true
+			continue
+		}
+
+		output.WriteByte(b)
+	}
+
+	response := output.Bytes()
+	var checksum byte
+	for _, b := range response[0 : len(response)-1] {
+		checksum ^= b
+	}
+
+	if checksum != response[len(response)-1] {
+		log.Println("Checksum failed in response")
+	}
+
+	return response[0 : len(response)-1], nil
 }
