@@ -71,6 +71,10 @@ const (
 	CmdDisplayPopup7   ShortCommand = 0xE1
 )
 
+const (
+	CmdPM3GetDragFactor ShortCommand = 0xC1
+)
+
 var (
 	commandName = map[byte]string{
 		0x80: "GetStatus",

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/GeertJohan/go.hid"
@@ -50,7 +52,32 @@ func (e *Erg) Status() {
 }
 
 func (e *Erg) GetID() {
-	e.Frame(CmdGetID)
+	if rs, err := e.Frame(CmdGetID); err == nil {
+		log.Printf(
+			"ID: %v",
+			string(rs.DataStructures[0].Data[0:5]),
+		)
+	}
+}
+
+func (e *Erg) GetSerial() (string, error) {
+	if rs, err := e.Frame(CmdGetSerial); err == nil {
+		return string(rs.DataStructures[0].Data[0:9]), nil
+	} else {
+		return "", err
+	}
+}
+
+// Get odometer distance in meters
+func (e *Erg) GetOdometer() (uint32, error) {
+	if rs, err := e.Frame(CmdGetOdometer); err == nil {
+		d := bytes.NewBuffer(rs.DataStructures[0].Data)
+		var distance uint32
+		err := binary.Read(d, binary.LittleEndian, &distance)
+		return distance, err
+	} else {
+		return 0, err
+	}
 }
 
 func (e *Erg) Work() {
@@ -65,12 +92,19 @@ func (e *Erg) Work() {
 
 func (e *Erg) UserInfo() {
 	response, _ := e.Frame(CmdGetUserInfo)
-	log.Printf(
-		"weight %v %v, age %v, gender %v",
-		uint16(response.DataStructures[0].Data[0]|response.DataStructures[0].Data[1]<<1),
-		uint8(response.DataStructures[0].Data[2]),
-		uint8(response.DataStructures[0].Data[3]),
-		uint8(response.DataStructures[0].Data[4]),
+
+	var weight uint16
+	var unit, age, gender uint8
+
+	d := bytes.NewBuffer(response.DataStructures[0].Data)
+	binary.Read(d, binary.LittleEndian, &weight)
+	binary.Read(d, binary.LittleEndian, &unit)
+	binary.Read(d, binary.LittleEndian, &age)
+	binary.Read(d, binary.LittleEndian, &gender)
+
+	fmt.Printf(
+		"weight %v, unit %v, age %v, gender %v\n",
+		weight, unit, age, gender,
 	)
 }
 
@@ -102,7 +136,7 @@ func (e *Erg) interact(bs []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	time.Sleep(25 * time.Millisecond)
+	time.Sleep(2 * time.Millisecond)
 	return e.read()
 }
 
@@ -132,7 +166,10 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer dev.Close()
+	defer func() {
+		log.Println("Closing device")
+		dev.Close()
+	}()
 
 	manufacturer, err := dev.ManufacturerString()
 	if err != nil {
@@ -144,19 +181,38 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	serial, err := dev.SerialNumberString()
+	usbSerial, err := dev.SerialNumberString()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	log.Println(manufacturer, product, serial)
+	fmt.Println(manufacturer, product, usbSerial)
 
 	erg := Erg{dev}
 	erg.Status()
 	erg.Version()
 	erg.GetID()
+	if serial, err := erg.GetSerial(); err == nil {
+		fmt.Printf("Serial #%v\n", serial)
+	}
 	erg.Work()
 	erg.UserInfo()
 	erg.Frame(CmdGetUtilization)
 	erg.Frame(CmdReset)
+	erg.Frame(CmdPM3GetDragFactor)
+	if distance, err := erg.GetOdometer(); err == nil {
+		fmt.Printf("Odometer distance: %v\n", fancyDistance(distance))
+	}
+}
+
+func fancyDistance(distance uint32) string {
+	output := ""
+	if distance > 1000 {
+		output += fmt.Sprintf("%vkm ", distance/1000)
+		distance %= 1000
+	}
+	if distance > 0 {
+		output += fmt.Sprintf("%vm", distance)
+	}
+	return output
 }

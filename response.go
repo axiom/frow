@@ -11,7 +11,7 @@ type ResponseStructure struct {
 }
 
 func (rs ResponseStructure) String() string {
-	return fmt.Sprintf("ResponseStructure {StatusByte: % 2x []DataStructures: %v}", rs.StatusByte, rs.DataStructures)
+	return fmt.Sprintf("ResponseStructure {StatusByte: %2x []DataStructures: %v}", rs.StatusByte, rs.DataStructures)
 }
 
 type DataStructure struct {
@@ -20,7 +20,7 @@ type DataStructure struct {
 }
 
 func (ds DataStructure) String() string {
-	return fmt.Sprintf("DataStructure {Identifier: % 2x Data: %v}", ds.Identifier, hex(ds.Data))
+	return fmt.Sprintf("DataStructure {Identifier: %2x Data: %v}", ds.Identifier, hex(ds.Data))
 }
 
 // [ 1 f1 81 a0  3  0  0  0 22 f2 a6 f2 71 f2 f2  0  0  0  0  0  0]
