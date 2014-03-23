@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+type PMCommand byte
+
 type ShortCommand byte
 
 func (cmd ShortCommand) Frame() []byte {
@@ -23,6 +25,7 @@ func (cmd ShortCommand) String() string {
 	}
 }
 
+// Standard CSAFE short commands
 const (
 	CmdGetStatus       ShortCommand = 0x80
 	CmdReset           ShortCommand = 0x81
@@ -33,11 +36,11 @@ const (
 	CmdGoReady         ShortCommand = 0x87
 	CmdBadID           ShortCommand = 0x88
 	CmdGetVersion      ShortCommand = 0x91
-	CmdGetID           ShortCommand = 0x92
+	CmdGetID           ShortCommand = 0x92 // User identifier number.
 	CmdGetUnits        ShortCommand = 0x93
 	CmdGetSerial       ShortCommand = 0x94
 	CmdGetList         ShortCommand = 0x98
-	CmdGetUtilization  ShortCommand = 0x99
+	CmdGetUtilization  ShortCommand = 0x99 // Utilization is the duraction of the current workout.
 	CmdGetMotorCurrent ShortCommand = 0x9A
 	CmdGetOdometer     ShortCommand = 0x9B
 	CmdGetErrorCode    ShortCommand = 0x9C
@@ -45,22 +48,22 @@ const (
 	CmdGetUserCfg1     ShortCommand = 0x9E
 	CmdGetUserCfg2     ShortCommand = 0x9F
 	CmdGetTWork        ShortCommand = 0xA0
-	CmdGetHorizontal   ShortCommand = 0xA1
+	CmdGetHorizontal   ShortCommand = 0xA1 // Work distance of workout.
 	CmdGetVertical     ShortCommand = 0xA2
-	CmdGetCalories     ShortCommand = 0xA3
+	CmdGetCalories     ShortCommand = 0xA3 // Accumulated calories burned.
 	CmdGetProgram      ShortCommand = 0xA4
 	CmdGetSpeed        ShortCommand = 0xA5
-	CmdGetPace         ShortCommand = 0xA6
-	CmdGetCadence      ShortCommand = 0xA7
+	CmdGetPace         ShortCommand = 0xA6 // Time elapsed per unit distance for a given stroke.
+	CmdGetCadence      ShortCommand = 0xA7 // Strokes per minute for per stroke.
 	CmdGetGrade        ShortCommand = 0xA8
 	CmdGetGear         ShortCommand = 0xA9
 	CmdGetUpList       ShortCommand = 0xAA
 	CmdGetUserInfo     ShortCommand = 0xAB
 	CmdGetTorque       ShortCommand = 0xAC
-	CmdGetHRCur        ShortCommand = 0xB0
+	CmdGetHRCur        ShortCommand = 0xB0 // Current heart beats per minute.
 	CmdGetHRTZone      ShortCommand = 0xB2
 	CmdGetMETS         ShortCommand = 0xB3
-	CmdGetPower        ShortCommand = 0xB4
+	CmdGetPower        ShortCommand = 0xB4 // Power generated based on the pace per stroke.
 	CmdGetHRAvg        ShortCommand = 0xB5
 	CmdGetHRMax        ShortCommand = 0xB6
 	CmdGetUserData1    ShortCommand = 0xBE
@@ -71,8 +74,14 @@ const (
 	CmdDisplayPopup7   ShortCommand = 0xE1
 )
 
+// PM3 Specific commands, see http://pcrower.sourceforge.net/pm3.pdf
+// I think these might be long commands.
 const (
-	CmdPM3GetDragFactor ShortCommand = 0xC1
+	CmdPMGetWorkoutType  PMCommand = 0x89
+	CmdPMGetWorkTime     PMCommand = 0xA0 // Work time duration of workout.
+	CmdPMGetWorkDistance PMCommand = 0xA3 // Work distance of workout.
+	CmdPMGetStrokeState  PMCommand = 0xBF
+	CmdPMGetDragFactor   PMCommand = 0xC1
 )
 
 var (

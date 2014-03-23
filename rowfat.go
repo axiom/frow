@@ -199,7 +199,6 @@ func main() {
 	erg.UserInfo()
 	erg.Frame(CmdGetUtilization)
 	erg.Frame(CmdReset)
-	erg.Frame(CmdPM3GetDragFactor)
 	if distance, err := erg.GetOdometer(); err == nil {
 		fmt.Printf("Odometer distance: %v\n", fancyDistance(distance))
 	}
